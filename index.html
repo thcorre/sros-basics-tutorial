@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nokia SR OS Basics Tutorial (MD-CLI)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Sidebar link active state */
+        .sidebar-link.active {
+            background-color: #2563eb; /* Tailwind blue-600 */
+            color: white;
+            font-weight: 600;
+        }
+        /* Styling for content elements */
+        .content-area h2 {
+            font-size: 1.75rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #334155; /* slate-700 */
+            margin-bottom: 1rem;
+            margin-top: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0; /* slate-200 */
+        }
+        .content-area h2:first-child {
+            margin-top: 0;
+        }
+        .content-area h3 {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* semibold */
+            color: #475569; /* slate-600 */
+            margin-bottom: 0.75rem;
+            margin-top: 1.25rem;
+        }
+        .content-area p, .content-area ul, .content-area ol {
+            color: #475569; /* slate-600 */
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+        .content-area ul {
+            list-style: disc;
+            margin-left: 1.5rem;
+        }
+        .content-area ol {
+            list-style: decimal;
+            margin-left: 1.5rem;
+        }
+        .content-area code:not(pre code) { /* Inline code */
+            background-color: #e2e8f0; /* slate-200 */
+            color: #c026d3; /* fuchsia-600 */
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-size: 0.9em;
+        }
+        .content-area pre {
+            background-color: #1e293b; /* slate-800 */
+            color: #93c5fd; /* blue-300 */
+            padding: 1rem;
+            border-radius: 0.375rem; /* rounded-md */
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+        .content-area pre code { /* Code within pre */
+             color: #93c5fd; /* blue-300 */
+             background-color: transparent;
+             padding: 0;
+        }
+        .content-area strong {
+            color: #1e293b; /* slate-800 */
+        }
+        .content-area a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: underline;
+        }
+        .content-area .note {
+            background-color: #eff6ff; /* blue-50 */
+            border-left: 4px solid #2563eb; /* blue-600 */
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.25rem;
+            color: #1e3a8a; /* blue-800 */
+        }
+        .content-area .note p {
+            color: #1e3a8a; /* blue-800 */
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen bg-gray-100">
+
+    <header class="bg-slate-700 text-white p-4 shadow-md z-10">
+        <h1 class="text-xl font-semibold tracking-wide">Nokia SR OS Basics Tutorial (MD-CLI)</h1>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        <aside id="sidebar" class="w-72 bg-slate-800 text-gray-300 p-5 space-y-1 overflow-y-auto shadow-lg">
+            </aside>
+
+        <main id="content-area" class="flex-1 p-6 md:p-8 bg-white overflow-y-auto content-area">
+            <div id="initial-message">
+                <h2>Welcome!</h2>
+                <p>Select a topic from the sidebar to get started with the Nokia SR OS MD-CLI tutorial.</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- Topics Data ---
+        const topics = [
+            {
+                id: 'introduction',
+                title: 'Introduction to SR OS',
+                content: `
+                    <h2>Welcome to the Nokia SR OS Basics Tutorial!</h2>
+                    <p>Nokia Service Router Operating System (SR OS), also known as SROS, is a robust, high-performance, and feature-rich network operating system designed for service provider and large enterprise networks. It powers Nokia's portfolio of IP/MPLS routers, including the 7x50 Service Router (SR) series and the 7705 Service Aggregation Router (SAR) series.</p>
+                    
+                    <h3>Key Characteristics of SR OS:</h3>
+                    <ul>
+                        <li><strong>Reliability and Scalability:</strong> Built for carrier-grade environments, SR OS offers high availability features, non-stop routing, and massive scalability in terms of forwarding capacity and service instances.</li>
+                        <li><strong>Rich Service Portfolio:</strong> It supports a wide array of services, including Layer 2 VPNs (VPLS, E-VPN), Layer 3 VPNs (VPRN, E-VPN), Internet Enhanced Services (IES), and advanced subscriber management features.</li>
+                        <li><strong>Hierarchical QoS:</strong> SR OS provides a sophisticated Quality of Service (QoS) framework, allowing for granular traffic management and service differentiation.</li>
+                        <li><strong>Comprehensive OAM:</strong> Extensive Operations, Administration, and Maintenance (OAM) tools are integrated for service assurance and troubleshooting across IP/MPLS networks.</li>
+                        <li><strong>Model-Driven Management:</strong> SR OS strongly emphasizes model-driven management. This tutorial focuses on the Model-Driven Command Line Interface (MD-CLI), which aligns with YANG models for structured configuration and state, ensuring consistency with NETCONF and gRPC interfaces.</li>
+                    </ul>
+                    <p>This tutorial aims to provide you with the fundamental knowledge to navigate and perform basic configurations on an SR OS device using the MD-CLI. We'll cover MD-CLI basics, system setup, interface configuration, and an introduction to routing.</p>
+                    <div class="note">
+                        <p><strong>Note:</strong> While SR OS also supports a "Classic CLI", this tutorial exclusively covers the MD-CLI. Command syntax and output may vary slightly depending on the SR OS version and specific hardware platform. Examples are based on SR OS 25.x releases.</p>
+                    </div>
+                `
+            },
+            {
+                id: 'cli-navigation',
+                title: 'MD-CLI Navigation & Modes',
+                content: `
+                    <h2>SR OS Model-Driven Command Line Interface (MD-CLI)</h2>
+                    <p>The MD-CLI is a modern interface for configuring, monitoring, and troubleshooting Nokia routers. It is based on YANG models, providing a structured and transactional approach to configuration.</p>
+
+                    <h3>Accessing the CLI</h3>
+                    <p>Typically, you access the MD-CLI via:</p>
+                    <ul>
+                        <li><strong>Console Port:</strong> Direct physical connection.</li>
+                        <li><strong>SSH (Secure Shell):</strong> Recommended for remote access.</li>
+                        <li><strong>Telnet:</strong> Less secure, may be disabled.</li>
+                    </ul>
+                    <p>By default, recent SR OS versions boot into the MD-CLI environment.</p>
+
+                    <h3>MD-CLI Prompts and Modes</h3>
+                    <p>The MD-CLI prompt indicates the current mode and configuration path. Common prompts include:</p>
+                    <ul>
+                        <li><strong>Operational Mode:</strong> <code>[/]</code> or <code>[ro:/]</code> (read-only operational). Example: <code>[/] user@hostname#</code></li>
+                        <li><strong>Configuration Edit Modes:</strong>
+                            <ul>
+                                <li><code>[pr:/configure system] user@hostname#</code> (Private Edit Mode)</li>
+                                <li><code>[ex:/configure system] user@hostname#</code> (Exclusive Edit Mode)</li>
+                                <li><code>[gl:/configure system] user@hostname#</code> (Global Edit Mode)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <p>To enter a configuration mode (e.g., private edit mode):</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]#</code></pre>
+                    <p>Or, more commonly, by directly navigating into a configuration branch, which implicitly enters an edit mode (often private by default if not specified):</p>
+                    <pre><code>[/]# configure system
+INFO: Entered [private] edit mode.
+[pr:/configure system]#</code></pre>
+
+                    <h3>Transactional Configuration</h3>
+                    <p>MD-CLI uses a transactional model:</p>
+                    <ol>
+                        <li>Changes are made in a <strong>candidate configuration</strong> (e.g., in private, exclusive, or global edit mode).</li>
+                        <li>Changes are reviewed using <code>info</code> or <code>compare</code>.</li>
+                        <li>Changes are applied to the <strong>running configuration</strong> using the <code>commit</code> command.</li>
+                        <li>Changes can be discarded before committing using the <code>discard</code> command.</li>
+                    </ol>
+                    <pre><code>[pr:/configure system]# name "MyNewRouter"
+[pr:/configure system]# info
+    name "MyNewRouter"
+[pr:/configure system]# commit
+Commit Succeeded.
+[pr:/configure system]#</code></pre>
+
+                    <h3>Basic Navigation and Help</h3>
+                    <ul>
+                        <li><code>?</code> or <code>help</code>: Displays available commands or options within the current context.</li>
+                        <li><code>Tab</code> key: Autocompletes commands and parameters.</li>
+                        <li><code>Up/Down Arrow</code> keys: Cycle through command history.</li>
+                        <li><code>environment console output more disabled</code>: Disables output paging for long command outputs.</li>
+                        <li><code>info</code>: Displays the candidate configuration of the current context.</li>
+                        <li><code>info detail</code>: Displays the candidate configuration of the current context including default values.</li>
+                        <li><code>up</code>: Moves up one level in the configuration hierarchy.</li>
+                        <li><code>top</code>: Moves to the top of the configuration hierarchy (e.g., <code>/configure</code>).</li>
+                        <li><code>exit</code>: Exits the current configuration mode or context. <code>exit all</code> exits all levels back to operational mode.</li>
+                        <li><code>quit</code>: Exits the CLI session.</li>
+                    </ul>
+
+                    <h3>Example: Viewing System Information (Operational Mode)</h3>
+                    <pre><code>[/]# show system information
+[/]# show card detail
+[/]# admin show configuration bof
+[/]# show full-configuration system</code></pre>
+                    <div class="note">
+                        <p>The MD-CLI provides a consistent structure aligned with YANG models, making it suitable for automation via NETCONF and gRPC.</p>
+                    </div>
+                `
+            },
+            {
+                id: 'initial-setup',
+                title: 'Initial System Setup (MD-CLI)',
+                content: `
+                    <h2>Initial System Configuration (MD-CLI)</h2>
+                    <p>After initial access, several basic system parameters should be configured using MD-CLI's transactional approach.</p>
+
+                    <h3>1. Setting the Hostname</h3>
+                    <p>The hostname identifies the router.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure system
+[pr:/configure system]# name "MyCoreRouter1"
+[pr:/configure system]# commit
+Commit Succeeded.
+[pr:/configure system]# exit all
+[/]#
+</code></pre>
+
+                    <h3>2. Boot Options File (BOF)</h3>
+                    <p>The BOF (<code>bof.cfg</code>) controls boot-time parameters. Changes are made in the <code>/configure bof</code> context and then committed.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure bof
+[pr:/configure bof]# console speed 115200
+[pr:/configure bof]# address 192.168.1.10/24 active true
+[pr:/configure bof]# static-route 0.0.0.0/0 next-hop 192.168.1.1
+[pr:/configure bof]# persist admin-state disable  // Example: make mgmt IP non-persistent
+[pr:/configure bof]# info // Review changes
+[pr:/configure bof]# commit
+Commit Succeeded.
+[pr:/configure bof]# exit all</code></pre>
+                    <p>View BOF settings from operational mode: <code>[/]# admin show configuration bof</code> or <code>[/]# show bof</code>.</p>
+
+                    <h3>3. Time Configuration (Clock & NTP)</h3>
+                    <p>Accurate time is important for logging and troubleshooting.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure system time
+[pr:/configure system time]# time-zone name "EST-05:00" // Example timezone
+[pr:/configure system time]# ntp
+[pr:/configure system time/ntp]# server 192.0.2.100
+[pr:/configure system time/ntp]# admin-state enable
+[pr:/configure system time/ntp]# commit
+Commit Succeeded.
+[pr:/configure system time/ntp]# exit all</code></pre>
+                    <p>Verify with <code>[/]# show system time</code> and <code>[/]# show system ntp</code>.</p>
+
+                    <h3>4. User Accounts</h3>
+                    <p>Configure user accounts for administrative access.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure system security user "adminuser"
+[pr:/configure system security user "adminuser"]# password // You will be prompted to enter password
+New password: ********
+Confirm password: ********
+[pr:/configure system security user "adminuser"]# access cli console netconf grpc ftp snmp
+[pr:/configure system security user "adminuser"]# console member "administrative" // Assign profile
+[pr:/configure system security user "adminuser"]# commit
+Commit Succeeded.
+[pr:/configure system security user "adminuser"]# exit all</code></pre>
+
+                    <h3>5. Applying and Persisting Configuration</h3>
+                    <p>In MD-CLI, the <code>commit</code> command applies the candidate configuration to the running configuration, making it active.</p>
+                    <p>To ensure these changes persist across reboots, the running configuration needs to be saved to the primary configuration file specified in the BOF (e.g., <code>cf3:/config.cfg</code>). While the system often handles this, an explicit save can be performed:</p>
+                    <pre><code>[/]# admin file save running-configuration cf3:/config.cfg
+Successfully saved cf3:/config.cfg
+</code></pre>
+                    <div class="note">
+                        <p>In redundant systems, synchronize the configuration to the standby CPM: <code>[/]# admin redundancy synchronize configuration</code>.</p>
+                    </div>
+                `
+            },
+            {
+                id: 'interface-config',
+                title: 'Interface Configuration (MD-CLI)',
+                content: `
+                    <h2>Interface Configuration (MD-CLI)</h2>
+                    <p>Configuring interfaces for network connectivity in MD-CLI involves setting port attributes and then defining logical IP interfaces.</p>
+
+                    <h3>Ports and Interfaces</h3>
+                    <ul>
+                        <li><strong>Port:</strong> Represents a physical or logical connection point (e.g., <code>1/1/1</code>, <code>lag-1</code>). Ports have physical layer attributes.</li>
+                        <li><strong>Interface:</strong> A logical Layer 3 entity (e.g., within a router instance like "Base") associated with a port or a service. IP addresses are configured on interfaces.</li>
+                    </ul>
+
+                    <h3>Configuring a Network Interface (Ethernet)</h3>
+                    <p>Example: Configure port <code>1/1/1</code> and assign an IP address to an interface using it.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure port 1/1/1
+[pr:/configure port 1/1/1]# ethernet // Enter ethernet context if needed
+[pr:/configure port 1/1/1 ethernet]# admin-state enable // Enable the port
+[pr:/configure port 1/1/1 ethernet]# up
+[pr:/]# configure router "Base" interface "to_peer_router" // Assuming "Base" router instance
+[pr:/configure router "Base" interface "to_peer_router"]# ipv4 primary address 10.0.0.1 prefix-length 24
+[pr:/configure router "Base" interface "to_peer_router"]# port 1/1/1
+[pr:/configure router "Base" interface "to_peer_router"]# admin-state enable // Enable the interface
+[pr:/configure router "Base" interface "to_peer_router"]# commit
+Commit Succeeded.
+[pr:/configure router "Base" interface "to_peer_router"]# exit all</code></pre>
+
+                    <h3>Configuring a Loopback Interface</h3>
+                    <p>Loopback interfaces are virtual interfaces, often used for router ID or management.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" interface "loopback0"
+[pr:/configure router "Base" interface "loopback0"]# ipv4 primary address 192.168.255.1 prefix-length 32
+[pr:/configure router "Base" interface "loopback0"]# loopback true
+[pr:/configure router "Base" interface "loopback0"]# admin-state enable
+[pr:/configure router "Base" interface "loopback0"]# commit
+Commit Succeeded.
+[pr:/configure router "Base" interface "loopback0"]# exit all</code></pre>
+
+                    <h3>Verification Commands (Operational Mode)</h3>
+                    <ul>
+                        <li><code>[/]# show port 1/1/1 detail</code></li>
+                        <li><code>[/]# show router "Base" interface "to_peer_router" detail</code></li>
+                    </ul>
+                    
+                    <h3>Common Port Settings</h3>
+                    <p>Within the <code>[pr:/configure port &lt;port-id&gt; ethernet]</code> context:</p>
+                    <ul>
+                        <li><code>mode (access | network | hybrid)</code>: Sets the port mode. Default is network.</li>
+                        <li><code>mtu &lt;bytes&gt;</code>: Sets the Maximum Transmission Unit.</li>
+                        <li><code>autonegotiate admin-state (enable | disable | limited)</code>: Configures autonegotiation.</li>
+                        <li><code>speed (10 | 100 | 1000 | ...)</code>: Manually sets port speed if autonegotiation is off.</li>
+                        <li><code>duplex (full | half)</code>: Manually sets duplex if autonegotiation is off.</li>
+                    </ul>
+                    <div class="note">
+                        <p>Remember to use <code>admin-state enable</code> (equivalent to <code>no shutdown</code>) at both the port and interface levels and then <code>commit</code> the changes.</p>
+                    </div>
+                `
+            },
+            {
+                id: 'static-routing',
+                title: 'Static Routing (MD-CLI)',
+                content: `
+                    <h2>Static Routing (MD-CLI)</h2>
+                    <p>Static routes manually define paths to destination networks. They are configured within the router instance context.</p>
+
+                    <h3>Configuring a Static Route</h3>
+                    <p>Example: Route traffic to network <code>172.16.10.0/24</code> via next-hop <code>10.0.0.2</code> in router instance "Base".</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" static-routes route 172.16.10.0/24
+[pr:/configure router "Base" static-routes route 172.16.10.0/24]# next-hop 10.0.0.2
+[pr:/configure router "Base" static-routes route 172.16.10.0/24]# admin-state enable // Enable the static route
+[pr:/configure router "Base" static-routes route 172.16.10.0/24]# commit
+Commit Succeeded.
+[pr:/configure router "Base" static-routes route 172.16.10.0/24]# exit all</code></pre>
+
+                    <h3>Static Route Options</h3>
+                    <p>Within the <code>[pr:/configure router "Base" static-routes route &lt;prefix&gt;]</code> context:</p>
+                    <ul>
+                        <li><strong>Next-hop IP address:</strong> <code>next-hop &lt;ip-address&gt;</code></li>
+                        <li><strong>Interface name:</strong> <code>interface &lt;interface-name&gt;</code> (for point-to-point).</li>
+                        <li><strong>Blackhole:</strong> <code>blackhole true</code> (discards traffic).</li>
+                        <li><strong>Preference (Administrative Distance):</strong> <code>preference &lt;value&gt;</code> (Default for static is 5).</li>
+                        <li><strong>Metric:</strong> <code>metric &lt;value&gt;</code>.</li>
+                    </ul>
+
+                    <h3>Verification (Operational Mode)</h3>
+                    <p>To view the routing table and verify static routes:</p>
+                    <pre><code>[/]# show router "Base" route-table
+[/]# show router "Base" route-table 172.16.10.0/24 detail</code></pre>
+                    <p>Look for routes with protocol "Static".</p>
+                    
+                    <div class="note">
+                        <p>For a default static route (0.0.0.0/0):</p>
+                        <pre><code>[pr:/]# configure router "Base" static-routes route 0.0.0.0/0
+[pr:/configure router "Base" static-routes route 0.0.0.0/0]# next-hop &lt;gateway_ip&gt;
+[pr:/configure router "Base" static-routes route 0.0.0.0/0]# admin-state enable
+[pr:/configure router "Base" static-routes route 0.0.0.0/0]# commit</code></pre>
+                    </div>
+                `
+            },
+            {
+                id: 'ospf-basics',
+                title: 'OSPF Basics (MD-CLI Intro)',
+                content: `
+                    <h2>OSPF Basics (MD-CLI Introduction)</h2>
+                    <p>Open Shortest Path First (OSPF) is a widely used Interior Gateway Protocol (IGP). This is a brief introduction to enabling OSPF on SR OS using MD-CLI.</p>
+
+                    <h3>1. Router ID</h3>
+                    <p>OSPF requires a unique Router ID. This is typically set to a loopback interface IP address.</p>
+                     <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base"
+[pr:/configure router "Base"]# router-id 192.168.255.1
+[pr:/configure router "Base"]# commit
+Commit Succeeded.
+[pr:/configure router "Base"]# exit all</code></pre>
+
+                    <h3>2. Enabling OSPF Process</h3>
+                    <p>OSPF is configured under <code>/configure router &lt;instance&gt; ospf &lt;instance-id&gt;</code>. Instance 0 is common for OSPFv2.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" ospf 0 // OSPF instance 0
+[pr:/configure router "Base" ospf 0]# admin-state enable // Enable the OSPF process
+[pr:/configure router "Base" ospf 0]# commit
+Commit Succeeded.
+[pr:/configure router "Base" ospf 0]# exit all</code></pre>
+
+                    <h3>3. Configuring an Area</h3>
+                    <p>OSPF uses areas. Area 0 (<code>0.0.0.0</code>) is the backbone area.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" ospf 0 area 0.0.0.0
+[pr:/configure router "Base" ospf 0 area 0.0.0.0]# info // Area is created by entering context
+    no parameters
+[pr:/configure router "Base" ospf 0 area 0.0.0.0]# commit
+Commit Succeeded.
+[pr:/configure router "Base" ospf 0 area 0.0.0.0]# exit all</code></pre>
+
+                    <h3>4. Adding Interfaces to OSPF</h3>
+                    <p>Assign interfaces to an OSPF area.</p>
+                    <p>Example: Add interface <code>"to_peer_router"</code> (IP: 10.0.0.1/24) to OSPF area 0.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" ospf 0 area 0.0.0.0 interface "to_peer_router"
+[pr:/configure router "Base" ospf 0 area 0.0.0.0 interface "to_peer_router"]# interface-type point-to-point
+[pr:/configure router "Base" ospf 0 area 0.0.0.0 interface "to_peer_router"]# admin-state enable // Enable OSPF on this interface
+[pr:/configure router "Base" ospf 0 area 0.0.0.0 interface "to_peer_router"]# commit
+Commit Succeeded.
+[pr:/configure router "Base" ospf 0 area 0.0.0.0 interface "to_peer_router"]# exit all</code></pre>
+
+                    <h3>5. OSPF Verification (Operational Mode)</h3>
+                    <ul>
+                        <li><code>[/]# show router "Base" ospf 0 status</code></li>
+                        <li><code>[/]# show router "Base" ospf 0 neighbor</code></li>
+                        <li><code>[/]# show router "Base" ospf 0 interface "to_peer_router" detail</code></li>
+                        <li><code>[/]# show router "Base" ospf 0 database</code></li>
+                        <li><code>[/]# show router "Base" route-table family ipv4 protocol ospf 0</code></li>
+                    </ul>
+                    <div class="note">
+                        <p>This is a very basic OSPF setup. Real-world OSPF configurations involve more details like authentication, area types, route summarization, etc., all configured within the MD-CLI structure.</p>
+                    </div>
+                `
+            },
+            {
+                id: 'show-commands',
+                title: 'Important Show Commands (MD-CLI)',
+                content: `
+                    <h2>Important 'Show' Commands (MD-CLI)</h2>
+                    <p>The <code>show</code> command, executed in operational mode (e.g., <code>[/]#</code> prompt), is your primary tool for monitoring and troubleshooting in SR OS MD-CLI. Many commands accept <code>detail</code> or <code>extensive</code> for more output. Router instances (e.g., "Base") or service names often need to be specified.</p>
+
+                    <h3>System & Hardware</h3>
+                    <ul>
+                        <li><code>show system information</code></li>
+                        <li><code>show system resources</code></li>
+                        <li><code>show card [slot-number] detail</code></li>
+                        <li><code>show mda [mda-slot/mda-number] detail</code></li>
+                        <li><code>show chassis [environment]</code></li>
+                        <li><code>show bof</code> or <code>admin show configuration bof</code></li>
+                        <li><code>show system image</code></li>
+                        <li><code>show system license detail</code></li>
+                        <li><code>show system time</code></li>
+                        <li><code>show system ntp [status | associations]</code></li>
+                    </ul>
+
+                    <h3>Interfaces & Ports</h3>
+                    <ul>
+                        <li><code>show port [port-id] [detail | statistics | description]</code></li>
+                        <li><code>show router "Base" interface [interface-name] detail</code> (replace "Base" if using a different router instance)</li>
+                        <li><code>show lag [lag-id] detail</code></li>
+                    </ul>
+
+                    <h3>Routing (Specify Router Instance, e.g., "Base")</h3>
+                    <ul>
+                        <li><code>show router "Base" route-table [ip-prefix/length] [detail | family ipv4/ipv6]</code></li>
+                        <li><code>show router "Base" static-routes [route ip-prefix/length]</code></li>
+                        <li><code>show router "Base" ospf [instance-id] [status | neighbor | interface | database | route-table]</code></li>
+                        <li><code>show router "Base" bgp [summary | neighbor | routes]</code> (if configured)</li>
+                        <li><code>show router "Base" arp [ip-address]</code></li>
+                        <li><code>show router "Base" fib [ip-prefix/length] detail</code></li>
+                    </ul>
+
+                    <h3>Services (Examples - Specify Service ID/Name)</h3>
+                    <ul>
+                        <li><code>show service sdp [sdp-id]</code></li>
+                        <li><code>show service id &lt;svc-id&gt; base</code></li>
+                        <li><code>show service id &lt;svc-id&gt; sdp-using</code></li>
+                        <li><code>show service id &lt;svc-id&gt; sap-using</code></li>
+                        <li><code>show service id &lt;svc-id&gt; vpls fdb detail</code></li>
+                        <li><code>show service id &lt;svc-id&gt; vprn route-table</code></li>
+                        <li><code>show service id &lt;svc-id&gt; ies interface</code></li>
+                    </ul>
+
+                    <h3>Configuration & Admin</h3>
+                    <ul>
+                        <li><code>admin show configuration running [path /configure/...]</code>: Shows the running configuration. Can specify a path.</li>
+                        <li><code>show full-configuration [path /configure/...]</code>: Similar to above, shows running configuration.</li>
+                        <li><code>info</code> (within a configuration mode context): Shows candidate configuration for that context.</li>
+                        <li><code>compare [to running | to file &lt;url&gt; | rollback &lt;id&gt;]</code> (within config mode): Compare candidate changes.</li>
+                        <li><code>show system management-interface commit-history [detail]</code>: View commit history for rollbacks.</li>
+                        <li><code>show system security user [username]</code>: User account details.</li>
+                        <li><code>show log application-log main [events &lt;num&gt;]</code> (example for main log, other logs exist).</li>
+                    </ul>
+                    <div class="note">
+                        <p>Many <code>show</code> commands can be piped to utilities like <code>match pattern "text"</code>, <code>count</code>, <code>expression "expression"</code> for filtering output. Example: <code>show port | match pattern "1/1/1"</code>.</p>
+                    </div>
+                `
+            },
+            {
+                id: 'config-management',
+                title: 'Configuration Management (MD-CLI)',
+                content: `
+                    <h2>Configuration Management (MD-CLI)</h2>
+                    <p>MD-CLI provides a robust, transactional approach to configuration management, emphasizing candidate configurations, commits, and rollbacks.</p>
+
+                    <h3>Applying Configuration (Commit)</h3>
+                    <p>Changes made in an edit mode (e.g., private, exclusive, global) are held in a candidate configuration. To make them active in the running configuration:</p>
+                    <pre><code>[pr:/configure system]# commit
+Commit Succeeded.</code></pre>
+                    <p>The <code>commit</code> command validates the changes and applies them atomically. You can add comments to commits: <code>commit comment "Added new OSPF interface"</code>.</p>
+
+                    <h3>Persisting Configuration for Boot</h3>
+                    <p>After a successful <code>commit</code>, the changes are live in the running configuration. To ensure these settings are used after a reboot, the running configuration should be saved to the primary configuration file specified in the BOF (e.g., <code>cf3:/config.cfg</code>).</p>
+                    <pre><code>[/]# admin file save running-configuration cf3:/config.cfg
+Successfully saved cf3:/config.cfg</code></pre>
+                    <p>This step ensures that the active configuration becomes the startup configuration.</p>
+
+                    <h3>Discarding Changes</h3>
+                    <p>If you want to abandon changes made in the candidate configuration before committing:</p>
+                    <pre><code>[pr:/configure system]# discard
+All changes in current edit mode have been discarded.
+[pr:/configure system]#</code></pre>
+
+                    <h3>BOF (Boot Options File) Configuration</h3>
+                    <p>BOF settings are configured under <code>/configure bof</code> and applied with a <code>commit</code>.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure bof
+[pr:/configure bof]# primary-config url "cf3:/my-main-config.cfg"
+[pr:/configure bof]# primary-image url "cf3:/sros-main.tim"
+[pr:/configure bof]# commit
+Commit Succeeded.
+[pr:/configure bof]# exit all</code></pre>
+                    <p>View current BOF: <code>[/]# show bof</code> or <code>[/]# admin show configuration bof</code>.</p>
+
+                    <h3>Redundant Systems Synchronization</h3>
+                    <p>Synchronize configuration from the active CPM to the standby CPM:</p>
+                    <pre><code>[/]# admin redundancy synchronize configuration</code></pre>
+                    <p>You can also synchronize the boot environment (including BOF): <code>[/]# admin redundancy synchronize boot-environment</code>.</p>
+
+                    <h3>Rollback to Previous Configurations</h3>
+                    <p>MD-CLI maintains a history of committed configurations. You can roll back to a previous state.</p>
+                    <pre><code>[/]# show system management-interface commit-history
+[pr:/]# rollback &lt;commit-id&gt; // Rolls back candidate to that state
+[pr:/]# compare to running // See what will change
+[pr:/]# commit // To apply the rollback</code></pre>
+                    <p>Alternatively, to directly revert the running configuration (use with caution):</p>
+                    <pre><code>[/]# admin system rollback &lt;commit-id&gt; confirmed &lt;minutes&gt;</code></pre>
+
+
+                    <h3>Backing Up Configuration</h3>
+                    <p>Save the running or candidate configuration to an external server (e.g., FTP, SFTP, SCP).</p>
+                    <pre><code>[/]# admin file copy source-url running-configuration destination-url ftp://user:pass@ftpserver/backup/myrouter-config.cfg</code></pre>
+                    <p>You can also save the BOF:</p>
+                    <pre><code>[/]# admin file copy source-url cf3:/bof.cfg destination-url ftp://user:pass@ftpserver/backup/myrouter-bof.cfg</code></pre>
+                    
+                    <h3>Comparing Configurations</h3>
+                    <p>Within an edit mode, compare the candidate configuration with the running configuration, a file, or a previous commit:</p>
+                    <pre><code>[pr:/configure system]# compare to running
+[pr:/configure system]# compare to file cf3:/backup-config.cfg
+[pr:/configure system]# compare to rollback &lt;commit-id&gt;</code></pre>
+
+                    <h3>Management Interface Configuration</h3>
+                    <p>The management interface IP can be configured under <code>/configure system management-interface</code> and committed. Persistence is typically handled by BOF settings (<code>persist admin-state enable/disable</code> in <code>/configure bof</code>).</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure system management-interface
+[pr:/configure system management-interface]# static-interface "management" ipv4 address 192.168.100.5/24
+[pr:/configure system management-interface]# commit
+Commit Succeeded.</code></pre>
+                `
+            }
+        ];
+
+        // --- Application Logic ---
+        const sidebar = document.getElementById('sidebar');
+        const contentArea = document.getElementById('content-area');
+        const initialMessage = document.getElementById('initial-message');
+
+        // Function to render sidebar links
+        function renderSidebar() {
+            sidebar.innerHTML = ''; // Clear existing links before rendering
+            topics.forEach(topic => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = topic.title;
+                link.classList.add('block', 'py-2', 'px-3', 'rounded-md', 'hover:bg-slate-700', 'hover:text-white', 'transition-colors', 'duration-150', 'sidebar-link');
+                link.dataset.topicId = topic.id;
+                sidebar.appendChild(link);
+            });
+        }
+
+        // Function to render content for a topic
+        function renderContent(topicId) {
+            const topic = topics.find(t => t.id === topicId);
+            if (topic) {
+                if(initialMessage) {
+                    initialMessage.style.display = 'none';
+                }
+                contentArea.innerHTML = topic.content;
+                // Scroll to top of content area
+                contentArea.scrollTop = 0;
+            } else {
+                 if(initialMessage) {
+                    initialMessage.style.display = 'block';
+                     contentArea.innerHTML = ''; // Clear previous content if topic not found
+                     contentArea.appendChild(initialMessage); // Re-add initial message
+                } else {
+                    contentArea.innerHTML = '<h2>Content not found</h2><p>Please select a valid topic from the sidebar.</p>';
+                }
+            }
+        }
+
+        // Function to set the active link in the sidebar
+        function setActiveLink(topicId) {
+            const links = sidebar.querySelectorAll('.sidebar-link');
+            links.forEach(link => {
+                if (link.dataset.topicId === topicId) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        // Event listener for sidebar clicks
+        sidebar.addEventListener('click', (event) => {
+            if (event.target.tagName === 'A' && event.target.dataset.topicId) {
+                event.preventDefault();
+                const topicId = event.target.dataset.topicId;
+                renderContent(topicId);
+                setActiveLink(topicId);
+                // Update URL hash for better navigation (optional but good for UX)
+                window.location.hash = topicId;
+            }
+        });
+        
+        // Initial setup
+        function initializeApp() {
+            renderSidebar();
+            const currentHash = window.location.hash.substring(1);
+            const topicExists = topics.find(t => t.id === currentHash);
+
+            if (currentHash && topicExists) {
+                renderContent(currentHash);
+                setActiveLink(currentHash);
+            } else {
+                // If no hash or invalid hash, show initial message
+                if(initialMessage) {
+                    initialMessage.style.display = 'block';
+                    contentArea.innerHTML = ''; // Clear previous content
+                    contentArea.appendChild(initialMessage);
+                }
+                 // Optionally, select the first topic by default if no hash
+                // if (topics.length > 0) {
+                //    renderContent(topics[0].id);
+                //    setActiveLink(topics[0].id);
+                //    window.location.hash = topics[0].id;
+                // }
+            }
+        }
+        
+        // Handle hash changes for back/forward navigation
+        window.addEventListener('hashchange', () => {
+            const currentHash = window.location.hash.substring(1);
+            const topicExists = topics.find(t => t.id === currentHash);
+            if (currentHash && topicExists) {
+                renderContent(currentHash);
+                setActiveLink(currentHash);
+            } else if (!currentHash) { // If hash is empty (e.g. cleared by user)
+                 if(initialMessage) {
+                    initialMessage.style.display = 'block';
+                    contentArea.innerHTML = '';
+                    contentArea.appendChild(initialMessage);
+                    setActiveLink(''); // Clear active link
+                }
+            }
+        });
+
+        // Call initializeApp on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+    </script>
+</body>
+</html>
