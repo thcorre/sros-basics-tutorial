@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-aksikan">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nokia SR OS Basics Tutorial (MD-CLI)</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -111,7 +111,7 @@
 <body class="flex flex-col h-screen bg-gray-100">
 
     <header class="bg-slate-700 text-white p-4 shadow-md z-10">
-        <h1 class="text-xl font-semibold tracking-wide">Nokia SR OS Basics Tutorial (MD-CLI)</h1>
+        <h1 class="text-xl font-semibold tracking-wide">Nokia SR OS Basics Tutorial</h1>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
@@ -154,7 +154,7 @@
                 id: 'cli-navigation',
                 title: 'MD-CLI Navigation & Modes',
                 content: `
-                    <h2>SR OS Model-Driven Command Line Interface (MD-CLI)</h2>
+                    <h2>SR OS Model-Driven Command Line Interface</h2>
                     <p>The MD-CLI is a modern interface for configuring, monitoring, and troubleshooting Nokia routers. It is based on YANG models, providing a structured and transactional approach to configuration.</p>
 
                     <h3>Accessing the CLI</h3>
@@ -227,9 +227,9 @@ Commit Succeeded.
             },
             {
                 id: 'initial-setup',
-                title: 'Initial System Setup (MD-CLI)',
+                title: 'Initial System Setup',
                 content: `
-                    <h2>Initial System Configuration (MD-CLI)</h2>
+                    <h2>Initial System Configuration</h2>
                     <p>After initial access, several basic system parameters should be configured using MD-CLI's transactional approach.</p>
 
                     <h3>1. Setting the Hostname</h3>
@@ -296,9 +296,9 @@ Successfully saved cf3:/config.cfg
             },
             {
                 id: 'interface-config',
-                title: 'Interface Configuration (MD-CLI)',
+                title: 'Interface Configuration',
                 content: `
-                    <h2>Interface Configuration (MD-CLI)</h2>
+                    <h2>Interface Configuration</h2>
                     <p>Configuring interfaces for network connectivity in MD-CLI involves setting port attributes and then defining logical IP interfaces.</p>
 
                     <h3>Ports and Interfaces</h3>
@@ -355,9 +355,9 @@ Commit Succeeded.
             },
             {
                 id: 'static-routing',
-                title: 'Static Routing (MD-CLI)',
+                title: 'Static Routing',
                 content: `
-                    <h2>Static Routing (MD-CLI)</h2>
+                    <h2>Static Routing</h2>
                     <p>Static routes manually define paths to destination networks. They are configured within the router instance context.</p>
 
                     <h3>Configuring a Static Route</h3>
@@ -397,9 +397,9 @@ Commit Succeeded.
             },
             {
                 id: 'ospf-basics',
-                title: 'OSPF Basics (MD-CLI Intro)',
+                title: 'OSPF Basics',
                 content: `
-                    <h2>OSPF Basics (MD-CLI Introduction)</h2>
+                    <h2>OSPF Basics)</h2>
                     <p>Open Shortest Path First (OSPF) is a widely used Interior Gateway Protocol (IGP). This is a brief introduction to enabling OSPF on SR OS using MD-CLI.</p>
 
                     <h3>1. Router ID</h3>
@@ -454,11 +454,83 @@ Commit Succeeded.
                     </div>
                 `
             },
+            { // NEW ISIS SECTION STARTS HERE
+                id: 'isis-basics',
+                title: 'ISIS Basics',
+                content: `
+                    <h2>ISIS Basics</h2>
+                    <p>Intermediate System to Intermediate System (IS-IS) is another widely used Interior Gateway Protocol (IGP), particularly popular in large service provider networks. It's a link-state protocol like OSPF but has its own distinct characteristics and terminology (e.g., areas, levels, NET addresses).</p>
+
+                    <h3>1. Enabling IS-IS Process</h3>
+                    <p>IS-IS is configured under <code>/configure router &lt;instance&gt; isis &lt;instance-id&gt;</code>. Typically, instance 0 is used.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" isis 0 // IS-IS instance 0
+[pr:/configure router "Base" isis 0]# admin-state enable // Enable the IS-IS process
+[pr:/configure router "Base" isis 0]# commit
+Commit Succeeded.
+[pr:/configure router "Base" isis 0]# exit all</code></pre>
+
+                    <h3>2. Configuring Network Entity Title (NET)</h3>
+                    <p>A NET address is crucial for IS-IS. It identifies the router (System ID) and its area (Area ID). The format is typically <code>AA.AAAA...AAAA.AAAA.AAAA.AAAA.SS</code> where 'AA' is the area ID, the middle part is the System ID (often derived from a loopback or MAC address), and 'SS' is the NSEL (usually 00 for routers).</p>
+                    <p>Example NET: <code>49.0001.1921.6800.0001.00</code> (Area 49.0001, System ID 1921.6800.0001, NSEL 00)</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" isis 0
+[pr:/configure router "Base" isis 0]# net 49.0001.1921.6800.0001.00
+[pr:/configure router "Base" isis 0]# commit
+Commit Succeeded.
+[pr:/configure router "Base" isis 0]# exit all</code></pre>
+                    <div class="note"><p>Ensure the System ID portion of the NET is unique within the IS-IS domain. The <code>router-id</code> configured under <code>/configure router "Base"</code> is used by protocols like OSPF and BGP, but IS-IS relies on the System ID within its NET.</p></div>
+
+
+                    <h3>3. Configuring IS-IS Level Capability</h3>
+                    <p>IS-IS supports different routing levels:</p>
+                    <ul>
+                        <li><strong>level-1:</strong> Intra-area routing. Routers only form adjacencies with other Level 1 routers in the same area.</li>
+                        <li><strong>level-2:</strong> Inter-area routing (backbone). Level 2 routers can form adjacencies with other Level 2 routers regardless of area.</li>
+                        <li><strong>level-1/2:</strong> Capable of both Level 1 and Level 2 operations. This is a common configuration.</li>
+                    </ul>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" isis 0
+[pr:/configure router "Base" isis 0]# level-capability level-1/2
+[pr:/configure router "Base" isis 0]# commit
+Commit Succeeded.
+[pr:/configure router "Base" isis 0]# exit all</code></pre>
+
+                    <h3>4. Adding Interfaces to IS-IS</h3>
+                    <p>Assign interfaces to IS-IS. IS-IS must be enabled on the interface, and you can specify its level capability.</p>
+                    <p>Example: Add interface <code>"to_peer_router"</code> to IS-IS instance 0.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" isis 0 interface "to_peer_router"
+[pr:/configure router "Base" isis 0 interface "to_peer_router"]# admin-state enable
+[pr:/configure router "Base" isis 0 interface "to_peer_router"]# level-capability level-1/2 // Or level-1, level-2 as needed
+[pr:/configure router "Base" isis 0 interface "to_peer_router"]# commit
+Commit Succeeded.
+[pr:/configure router "Base" isis 0 interface "to_peer_router"]# exit all</code></pre>
+                    <p>It's also common to enable IS-IS on loopback interfaces (typically as passive for Level 2 reachability).</p>
+                    <pre><code>[pr:/]# configure router "Base" isis 0 interface "loopback0"
+[pr:/configure router "Base" isis 0 interface "loopback0"]# admin-state enable
+[pr:/configure router "Base" isis 0 interface "loopback0"]# passive true
+[pr:/configure router "Base" isis 0 interface "loopback0"]# level-capability level-2 // Often Level 2 for loopbacks
+[pr:/configure router "Base" isis 0 interface "loopback0"]# commit</code></pre>
+
+                    <h3>5. IS-IS Verification (Operational Mode)</h3>
+                    <ul>
+                        <li><code>[/]# show router "Base" isis 0 status</code>: Overall IS-IS process status.</li>
+                        <li><code>[/]# show router "Base" isis 0 adjacency</code>: Displays IS-IS adjacencies.</li>
+                        <li><code>[/]# show router "Base" isis 0 interface [interface-name] detail</code>: Shows IS-IS enabled interfaces.</li>
+                        <li><code>[/]# show router "Base" isis 0 database detail</code>: Displays the IS-IS Link-State Database (LSDB).</li>
+                        <li><code>[/]# show router "Base" route-table family ipv4 protocol isis 0</code>: Shows IS-IS learned routes.</li>
+                    </ul>
+                    <div class="note">
+                        <p>This is a very basic IS-IS setup. Real-world IS-IS configurations can involve more details such as metrics, authentication, area design, LSP flooding optimization, and enabling IS-IS for IPv6, all configured within the MD-CLI structure.</p>
+                    </div>
+                `
+            }, // NEW ISIS SECTION ENDS HERE
             {
                 id: 'show-commands',
-                title: 'Important Show Commands (MD-CLI)',
+                title: 'Important Show Commands',
                 content: `
-                    <h2>Important 'Show' Commands (MD-CLI)</h2>
+                    <h2>Important 'Show' Commands</h2>
                     <p>The <code>show</code> command, executed in operational mode (e.g., <code>[/]#</code> prompt), is your primary tool for monitoring and troubleshooting in SR OS MD-CLI. Many commands accept <code>detail</code> or <code>extensive</code> for more output. Router instances (e.g., "Base") or service names often need to be specified.</p>
 
                     <h3>System & Hardware</h3>
@@ -487,6 +559,7 @@ Commit Succeeded.
                         <li><code>show router "Base" route-table [ip-prefix/length] [detail | family ipv4/ipv6]</code></li>
                         <li><code>show router "Base" static-routes [route ip-prefix/length]</code></li>
                         <li><code>show router "Base" ospf [instance-id] [status | neighbor | interface | database | route-table]</code></li>
+                        <li><code>show router "Base" isis [instance-id] [status | adjacency | interface | database | route-table]</code> (*New for ISIS*)</li>
                         <li><code>show router "Base" bgp [summary | neighbor | routes]</code> (if configured)</li>
                         <li><code>show router "Base" arp [ip-address]</code></li>
                         <li><code>show router "Base" fib [ip-prefix/length] detail</code></li>
@@ -520,9 +593,9 @@ Commit Succeeded.
             },
             {
                 id: 'config-management',
-                title: 'Configuration Management (MD-CLI)',
+                title: 'Configuration Management',
                 content: `
-                    <h2>Configuration Management (MD-CLI)</h2>
+                    <h2>Configuration Management</h2>
                     <p>MD-CLI provides a robust, transactional approach to configuration management, emphasizing candidate configurations, commits, and rollbacks.</p>
 
                     <h3>Applying Configuration (Commit)</h3>
