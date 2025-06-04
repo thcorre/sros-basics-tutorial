@@ -78,7 +78,7 @@
             padding: 1rem;
             border-radius: 0.375rem; /* rounded-md */
             overflow-x: auto;
-            margin-bottom: 1rem; /* Reverted margin */
+            margin-bottom: 1rem; 
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.9em;
         }
@@ -111,7 +111,7 @@
 <body class="flex flex-col h-screen bg-gray-100">
 
     <header class="bg-slate-700 text-white p-4 shadow-md z-10">
-        <h1 class="text-xl font-semibold tracking-wide">Nokia SR OS Basics Tutorial (MD-CLI)</h1>
+        <h1 class="text-xl font-semibold tracking-wide">Nokia SR OS Basics Tutorial (Draft - June)</h1>
     </header>
 
     <div class="flex flex-1 overflow-hidden">
@@ -121,7 +121,7 @@
         <main id="content-area" class="flex-1 p-6 md:p-8 bg-white overflow-y-auto content-area">
             <div id="initial-message">
                 <h2>Welcome to the Nokia SR OS Basics Tutorial!</h2>
-                <p>Select a topic from the sidebar to get started with the Nokia SR OS MD-CLI tutorial.</p>
+                <p>Select a topic from the sidebar to get started with the Nokia SR OS Basics tutorial.</p>
             </div>
         </main>
     </div>
@@ -134,7 +134,7 @@
                 title: 'Introduction to SR OS',
                 content: `
                     <h2>Introduction to SR OS</h2>
-                    <p>Nokia Service Router Operating System (SR OS), also known as SROS, is a robust, high-performance, and feature-rich network operating system designed for service provider and large enterprise networks. It powers Nokia's portfolio of IP/MPLS routers, including the 7x50 Service Router (SR) series and the 7705 Service Aggregation Router (SAR) series.</p>
+                    <p><a href="https://www.nokia.com/ip-networks/service-router-operating-system-nos/" target="_blank" rel="noopener noreferrer">Nokia Service Router Operating System (SR OS)</a>, is a robust, high-performance, and feature-rich network operating system designed for service provider and large enterprise networks. It powers Nokia's portfolio of IP/MPLS routers, including the <a href=https://www.nokia.com/ip-networks/7750-service-router/" target="_blank" rel="noopener noreferrer"> 7750 Service Router (SR/SR-s) series</a>, the <a href="https://www.nokia.com/ip-networks/7250-interconnect-router/" target="_blank" rel="noopener noreferrer"> 7250 Interconnect Router (IXR) series</a> and the <a href="https://www.nokia.com/ip-networks/7705-service-aggregation-router/" target="_blank" rel="noopener noreferrer"> 7705 Service Aggregation Router (SAR) series.</a></p>
                     
                     <h3>Key Characteristics of SR OS:</h3>
                     <ul>
@@ -162,7 +162,7 @@
                     <ul>
                         <li><strong>Console Port:</strong> Direct physical connection.</li>
                         <li><strong>SSH (Secure Shell):</strong> Recommended for remote access.</li>
-                        <li><strong>Telnet:</strong> Less secure, may be disabled.</li>
+                        <li><strong>Telnet:</strong> Less secure (disabled by default).</li>
                     </ul>
                     <p>By default, recent SR OS versions boot into the MD-CLI environment.</p>
 
@@ -528,9 +528,9 @@ Commit Succeeded.
             },
             {
                 id: 'isis-basics',
-                title: 'ISIS',
+                title: 'IS-IS',
                 content: `
-                    <h2>ISIS</h2>
+                    <h2>IS-IS</h2>
                     <p>Intermediate System to Intermediate System (IS-IS) is another widely used Interior Gateway Protocol (IGP), particularly popular in large service provider networks. It's a link-state protocol like OSPF but has its own distinct characteristics and terminology (e.g., areas, levels, NET addresses).</p>
 
                     <h3>1. Enabling IS-IS Process</h3>
@@ -661,7 +661,244 @@ Commit Succeeded.
                         <p>This covers basic Node SID configuration for SR-ISIS. Segment Routing also includes Adjacency SIDs (Adj-SIDs) for specific links, SR Policies for traffic engineering, and integration with BGP (BGP-LS and BGP EPE), which are more advanced topics.</p>
                     </div>
                 `
+            },
+            { 
+                id: 'srv6-basics',
+                title: 'SRv6',
+                content: `
+                    <h2>Segment Routing v6 (128-bits)</h2>
+                    <p>Segment Routing over IPv6 (SRv6) extends the Segment Routing paradigm to the IPv6 data plane. Instead of MPLS labels, SRv6 uses IPv6 addresses as Segment Identifiers (SIDs). IS-IS can be used as the IGP to advertise SRv6 SIDs and capabilities.</p>
+
+                    <h3>1. Prerequisites</h3>
+                    <ul>
+                        <li>Basic IS-IS must be configured and operational.</li>
+                        <li>IPv6 must be enabled on the relevant interfaces and within the IS-IS instance.</li>
+                    </ul>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" interface "loopback0" ipv6 address 2001:db8:0:1::1/128 // Ensure IPv6 on loopback
+[pr:/]# configure router "Base" interface "to_peer_router" ipv6 address 2001:db8:12::1/64 // Ensure IPv6 on physical
+[pr:/]# configure router "Base" isis 0
+[pr:/configure router "Base" isis 0]# family ipv6 unicast // Enable IPv6 address family in IS-IS
+[pr:/configure router "Base" isis 0]# commit
+Commit Succeeded.
+[pr:/configure router "Base" isis 0]# exit all</code></pre>
+
+
+                    <h3>2. Enabling SRv6 in IS-IS</h3>
+                    <p>Enable SRv6 capabilities within the IS-IS instance.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" isis 0
+[pr:/configure router "Base" isis 0]# segment-routing-v6
+[pr:/configure router "Base" isis 0 segment-routing-v6]# admin-state enable
+[pr:/configure router "Base" isis 0 segment-routing-v6]# commit
+Commit Succeeded.
+[pr:/configure router "Base" isis 0 segment-routing-v6]# exit all</code></pre>
+
+                    <h3>3. Configuring SRv6 Locators</h3>
+                    <p>A locator is an IPv6 prefix that identifies an SRv6 node. SRv6 SIDs are typically allocated from this locator prefix. Locators are usually configured on loopback interfaces.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" segment-routing-v6
+[pr:/configure router "Base" segment-routing-v6]# locator "main_locator" prefix 2001:db8:cafe::/48 // Define the locator prefix
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator"]# admin-state enable
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator"]# algorithm 0 // Standard SPF algorithm
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator"]# commit
+Commit Succeeded.
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator"]# exit all</code></pre>
+                    <p>Associate this locator with the IS-IS instance for advertisement:</p>
+                     <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" isis 0 segment-routing-v6
+[pr:/configure router "Base" isis 0 segment-routing-v6]# locator "main_locator" // Reference the globally defined locator
+[pr:/configure router "Base" isis 0 segment-routing-v6 locator "main_locator"]# admin-state enable
+[pr:/configure router "Base" isis 0 segment-routing-v6 locator "main_locator"]# commit
+Commit Succeeded.
+[pr:/configure router "Base" isis 0 segment-routing-v6 locator "main_locator"]# exit all</code></pre>
+
+                    <h3>4. Configuring SRv6 END SIDs</h3>
+                    <p>An END SID is a basic SRv6 SID that identifies a specific function on a node, typically tied to a locator. For example, an END SID can represent the SRv6 node itself.</p>
+                    <p>Example: Configure an END SID for the locator "main_locator". The SID value is an IPv6 address within the locator's prefix.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" segment-routing-v6 locator "main_locator"
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator"]# static-sid sid 2001:db8:cafe::1 behavior uN // uN (micro-N SID) for basic node reachability
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator" static-sid 2001:db8:cafe::1]# admin-state enable
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator" static-sid 2001:db8:cafe::1]# commit
+Commit Succeeded.
+[pr:/configure router "Base" segment-routing-v6 locator "main_locator" static-sid 2001:db8:cafe::1]# exit all</code></pre>
+                    <div class="note"><p>SRv6 supports various SID behaviors (e.g., END, END.X for cross-connect, END.T for table lookup). The uN (micro-N SID) behavior is a common one for node identification.</p></div>
+
+                    <h3>5. SRv6-ISIS Verification (Operational Mode)</h3>
+                    <ul>
+                        <li><code>[/]# show router "Base" isis 0 segment-routing-v6 locators</code>: Displays advertised SRv6 locators.</li>
+                        <li><code>[/]# show router "Base" isis 0 segment-routing-v6 sids</code>: Displays advertised SRv6 SIDs.</li>
+                        <li><code>[/]# show router "Base" isis 0 database detail [lsp-id]</code>: Examine LSPs for SRv6 capability and SID advertisements (look for SRv6 specific TLVs).</li>
+                        <li><code>[/]# show router "Base" segment-routing-v6 locators</code>: Displays configured SRv6 locators globally.</li>
+                        <li><code>[/]# show router "Base" segment-routing-v6 sids</code>: Displays configured SRv6 SIDs globally.</li>
+                        <li><code>[/]# show router "Base" route-table family ipv6 2001:db8:cafe::1/128 detail</code>: Check reachability of an SRv6 SID.</li>
+                    </ul>
+                    <div class="note">
+                        <p>This is a foundational SRv6 setup. Advanced SRv6 involves more complex SID behaviors, SRv6 policies for traffic engineering, and integration with services.</p>
+                    </div>
+                `
+            },
+            { 
+                id: 'bgp-basics',
+                title: 'BGP',
+                content: `
+                    <h2>BGP</h2>
+                    <p>Border Gateway Protocol (BGP) is the primary routing protocol used to exchange routing information between autonomous systems (ASes) on the internet. It can also be used within an AS (iBGP).</p>
+
+                    <h3>1. Enabling BGP Process & Router ID</h3>
+                    <p>BGP is configured under <code>/configure router "Base" bgp</code>. A BGP router ID is mandatory and should be unique. It's often the same as the OSPF/IS-IS router ID (a loopback IP).</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base"
+[pr:/configure router "Base"]# router-id 192.168.255.1 // Ensure router-id is set if not already
+[pr:/configure router "Base"]# autonomous-system 65001 // Configure local AS number
+[pr:/configure router "Base"]# bgp
+[pr:/configure router "Base" bgp]# admin-state enable // Enable the BGP process
+[pr:/configure router "Base" bgp]# router-id 192.168.255.1 // Set BGP specific router-id
+[pr:/configure router "Base" bgp]# commit
+Commit Succeeded.
+[pr:/configure router "Base" bgp]# exit all</code></pre>
+
+                    <h3>2. Configuring BGP Groups</h3>
+                    <p>Neighbors are organized into groups. Groups can define common policies or attributes for a set of neighbors.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" bgp group "eBGP-Peers"
+[pr:/configure router "Base" bgp group "eBGP-Peers"]# type external
+[pr:/configure router "Base" bgp group "eBGP-Peers"]# commit
+Commit Succeeded.
+
+[pr:/]# configure router "Base" bgp group "iBGP-RR-Clients"
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients"]# type internal
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients"]# cluster 192.168.255.1 // Example if this router is a Route Reflector
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients"]# commit
+Commit Succeeded.
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients"]# exit all</code></pre>
+
+                    <h3>3. Configuring BGP Neighbors</h3>
+                    <h4>a. eBGP Neighbor</h4>
+                    <p>External BGP neighbors are in different ASes.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" bgp group "eBGP-Peers" neighbor 10.0.0.2
+[pr:/configure router "Base" bgp group "eBGP-Peers" neighbor 10.0.0.2]# admin-state enable
+[pr:/configure router "Base" bgp group "eBGP-Peers" neighbor 10.0.0.2]# peer-as 65002 // AS number of the eBGP peer
+[pr:/configure router "Base" bgp group "eBGP-Peers" neighbor 10.0.0.2]# commit
+Commit Succeeded.
+[pr:/configure router "Base" bgp group "eBGP-Peers" neighbor 10.0.0.2]# exit all</code></pre>
+
+                    <h4>b. iBGP Neighbor</h4>
+                    <p>Internal BGP neighbors are in the same AS. They often peer using loopback addresses.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" bgp group "iBGP-RR-Clients" neighbor 192.168.255.2
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients" neighbor 192.168.255.2]# admin-state enable
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients" neighbor 192.168.255.2]# peer-as 65001 // Same AS number
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients" neighbor 192.168.255.2]# local-address 192.168.255.1 // Source IP for peering (own loopback)
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients" neighbor 192.168.255.2]# commit
+Commit Succeeded.
+[pr:/configure router "Base" bgp group "iBGP-RR-Clients" neighbor 192.168.255.2]# exit all</code></pre>
+                    <div class="note"><p>For iBGP, ensure there's an IGP (like OSPF or IS-IS) providing reachability for the loopback addresses used for peering.</p></div>
+
+                    <h3>4. Advertising Networks into BGP</h3>
+                    <p>You can advertise networks into BGP using the <code>network</code> command (for prefixes existing in the RIB from other sources like static or IGP) or by redistributing routes from other protocols (more advanced).</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" bgp
+[pr:/configure router "Base" bgp]# network 172.16.0.0/16
+[pr:/configure router "Base" bgp]# commit
+Commit Succeeded.
+[pr:/configure router "Base" bgp]# exit all</code></pre>
+
+                    <h3>5. BGP Verification (Operational Mode)</h3>
+                    <ul>
+                        <li><code>[/]# show router "Base" bgp summary</code>: Overview of BGP neighbors and their states.</li>
+                        <li><code>[/]# show router "Base" bgp neighbor [ip-address] detail</code>: Detailed information about a specific BGP neighbor.</li>
+                        <li><code>[/]# show router "Base" bgp routes family ipv4 unicast received neighbor [ip-address]</code>: Routes received from a neighbor.</li>
+                        <li><code>[/]# show router "Base" bgp routes family ipv4 unicast advertised neighbor [ip-address]</code>: Routes advertised to a neighbor.</li>
+                        <li><code>[/]# show router "Base" bgp routes family ipv4 unicast all</code>: All BGP routes in the BGP RIB.</li>
+                        <li><code>[/]# show router "Base" route-table family ipv4 protocol bgp</code>: BGP routes installed in the main routing table.</li>
+                    </ul>
+                    <div class="note">
+                        <p>This is a very basic BGP configuration. Real-world BGP involves complex route policies (import/export), route reflectors, confederations, path attributes manipulation, and various address families (IPv6, VPN-IPv4, etc.).</p>
+                    </div>
+                `
             }, 
+            { // NEW EVPN SECTION STARTS HERE
+                id: 'evpn-basics',
+                title: 'L2 EVPN',
+                content: `
+                    <h2>L2 EVPN</h2>
+                    <p>Ethernet VPN (EVPN) is a BGP-based technology that provides advanced Layer 2 and Layer 3 VPN services. This section focuses on basic L2 EVPN using a VPLS service with BGP-EVPN signaling.</p>
+
+                    <h3>1. Key Concepts</h3>
+                    <ul>
+                        <li><strong>MAC-VRF:</strong> A Virtual Routing and Forwarding instance for MAC addresses within a VPLS service.</li>
+                        <li><strong>EVPN Instance (EVI):</strong> Uniquely identifies an EVPN service in the network.</li>
+                        <li><strong>BGP EVPN Route Types:</strong> EVPN uses specific BGP Network Layer Reachability Information (NLRI) to advertise MAC addresses, IP prefixes (for L3 EVPN), and other service information. Common L2 EVPN route types include:
+                            <ul>
+                                <li>Type 2: MAC/IP Advertisement Route</li>
+                                <li>Type 3: Inclusive Multicast Ethernet Tag Route</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>2. Prerequisites</h3>
+                    <ul>
+                        <li>BGP must be configured and operational (as per the "BGP Basics" section).</li>
+                        <li>BGP neighbors intended to exchange EVPN routes must be configured to support the <code>l2-vpn evpn</code> address family.</li>
+                    </ul>
+                     <pre><code>[/]# edit-config private
+[pr:/]# configure router "Base" bgp group "iBGP-EVPN-Peers" // Assuming an iBGP group for EVPN
+[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers"]# neighbor 192.168.255.2 // Example iBGP peer
+[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2]# family evpn
+[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2" family evpn]# admin-state enable
+[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2" family evpn]# commit
+Commit Succeeded.
+[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2" family evpn]# exit all</code></pre>
+
+                    <h3>3. Configuring a VPLS Service with BGP-EVPN</h3>
+                    <h4>a. Create VPLS Service and Enable BGP EVPN</h4>
+                    <p>A VPLS service provides the Layer 2 forwarding domain. BGP EVPN is used for MAC learning and advertisement instead of traditional data-plane learning or LDP signaling.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure service vpls 100 customer 1 name "mac-vrf-100"
+[pr:/configure service vpls 100]# admin-state enable
+[pr:/configure service vpls 100]# bgp
+[pr:/configure service vpls 100 bgp]# admin-state enable
+[pr:/configure service vpls 100 bgp]# route-distinguisher auto-rd // Or manually define
+[pr:/configure service vpls 100 bgp]# route-target export target:65001:100 // Example RT
+[pr:/configure router "Base" bgp]# route-target import target:65001:100 // Example RT
+[pr:/configure service vpls 100 bgp]# exit
+[pr:/configure service vpls 100]# bgp-evpn
+[pr:/configure service vpls 100 bgp-evpn]# evi 100 // EVPN Instance ID
+[pr:/configure service vpls 100 bgp-evpn]# admin-state enable
+[pr:/configure service vpls 100 bgp-evpn]# mpls
+[pr:/configure service vpls 100 bgp-evpn mpls]# admin-state enable
+[pr:/configure service vpls 100 bgp-evpn mpls]# auto-bind-tunnel resolution any // For transport
+[pr:/configure service vpls 100 bgp-evpn mpls]# control-word true // Recommended for interop
+[pr:/configure service vpls 100 bgp-evpn mpls]# commit
+Commit Succeeded.
+[pr:/configure service vpls 100 bgp-evpn mpls]# exit all</code></pre>
+                    <div class="note"><p>Route Distinguishers (RDs) and Route Targets (RTs) are crucial for VPN context and route propagation in BGP MPLS VPNs, including EVPN.</p></div>
+
+                    <h4>b. Configure Service Access Points (SAPs)</h4>
+                    <p>SAPs are the customer-facing attachment points to the VPLS service.</p>
+                    <pre><code>[/]# edit-config private
+[pr:/]# configure service vpls 100 sap 1/1/1:100 // Example: Port 1/1/1, VLAN 100
+[pr:/configure service vpls 100 sap 1/1/1:100]# admin-state enable
+[pr:/configure service vpls 100 sap 1/1/1:100]# commit
+Commit Succeeded.
+[pr:/configure service vpls 100 sap 1/1/1:100]# exit all</code></pre>
+
+                    <h3>4. EVPN Verification (Operational Mode)</h3>
+                    <ul>
+                        <li><code>[/]# show service id 100 bgp-evpn detail</code>: Detailed BGP EVPN status for the VPLS service.</li>
+                        <li><code>[/]# show service id 100 fdb detail</code>: MAC forwarding database for the VPLS service (will show MACs learned via BGP EVPN).</li>
+                        <li><code>[/]# show router "Base" bgp routes family evpn all</code>: Displays all EVPN routes in the BGP RIB.</li>
+                        <li><code>[/]# show router "Base" bgp routes family evpn evi 100</code>: EVPN routes specific to EVI 100.</li>
+                        <li><code>[/]# show service sdp bgp-evpn</code>: Information about SDPs used by BGP EVPN services.</li>
+                    </ul>
+                    <div class="note">
+                        <p>This is a basic L2 EVPN (VPLS) setup. EVPN also supports other service types like E-LAN, E-Line (VPWS), integrated routing and bridging (IRB) for L3 EVPN, and various advanced features like aliasing, mass withdrawal, and BUM traffic handling options.</p>
+                    </div>
+                `
+            }, // NEW EVPN SECTION ENDS HERE
             {
                 id: 'show-commands',
                 title: 'Important Show Commands',
@@ -696,10 +933,16 @@ Commit Succeeded.
                         <li><code>show router "Base" static-routes [route ip-prefix/length]</code></li>
                         <li><code>show router "Base" ospf [instance-id] [status | neighbor | interface | database | route-table]</code></li>
                         <li><code>show router "Base" isis [instance-id] [status | adjacency | interface | database | route-table]</code></li>
-                        <li><code>show router "Base" isis [instance-id] segment-routing prefix-sids</code> (*New for SR-ISIS*)</li>
-                        <li><code>show router "Base" segment-routing srgb</code> (*New for SR*)</li>
-                        <li><code>show router "Base" segment-routing tunnel-table</code> (*New for SR*)</li>
-                        <li><code>show router "Base" bgp [summary | neighbor | routes]</code> (if configured)</li>
+                        <li><code>show router "Base" isis [instance-id] segment-routing prefix-sids</code> (*SR-MPLS*)</li>
+                        <li><code>show router "Base" segment-routing srgb</code> (*SR-MPLS*)</li>
+                        <li><code>show router "Base" segment-routing tunnel-table</code> (*SR-MPLS*)</li>
+                        <li><code>show router "Base" isis [instance-id] segment-routing-v6 locators</code> (*SRv6*)</li>
+                        <li><code>show router "Base" isis [instance-id] segment-routing-v6 sids</code> (*SRv6*)</li>
+                        <li><code>show router "Base" segment-routing-v6 locators</code> (*SRv6*)</li>
+                        <li><code>show router "Base" segment-routing-v6 sids</code> (*SRv6*)</li>
+                        <li><code>show router "Base" bgp summary</code></li>
+                        <li><code>show router "Base" bgp neighbor [ip-address] detail</code></li>
+                        <li><code>show router "Base" bgp routes family &lt;family&gt; [all | received | advertised]</code> (e.g., ipv4 unicast, l2-vpn evpn)</li>
                         <li><code>show router "Base" arp [ip-address]</code></li>
                         <li><code>show router "Base" fib [ip-prefix/length] detail</code></li>
                         <li><code>show router "Base" mpls lfib</code> (*Relevant for SR-MPLS*)</li>
@@ -711,7 +954,8 @@ Commit Succeeded.
                         <li><code>show service id &lt;svc-id&gt; base</code></li>
                         <li><code>show service id &lt;svc-id&gt; sdp-using</code></li>
                         <li><code>show service id &lt;svc-id&gt; sap-using</code></li>
-                        <li><code>show service id &lt;svc-id&gt; vpls fdb detail</code></li>
+                        <li><code>show service id &lt;svc-id&gt; vpls fdb detail</code> (*Relevant for L2 EVPN/VPLS*)</li>
+                        <li><code>show service id &lt;svc-id&gt; bgp-evpn detail</code> (*New for EVPN*)</li>
                         <li><code>show service id &lt;svc-id&gt; vprn route-table</code></li>
                         <li><code>show service id &lt;svc-id&gt; ies interface</code></li>
                     </ul>
@@ -746,11 +990,13 @@ Commit Succeeded.
                         <li><a href="https://documentation.nokia.com/sr/25-3/7750-sr/titles/basic-system-configuration.html" target="_blank" rel="noopener noreferrer">SR OS Basic System Configuration Guide (25.3)</a></li>
                         <li><a href="https://documentation.nokia.com/sr/25-3/7750-sr/titles/unicast-routing-protocols.html" target="_blank" rel="noopener noreferrer">SR OS Unicast Routing Protocols Guide (25.3)</a></li>
                         <li><a href="https://documentation.nokia.com/sr/25-3/7750-sr/titles/segment-routing-pce-user.html" target="_blank" rel="noopener noreferrer">SR OS Segment Routing and PCE User Guide (25.3)</a></li>
+                        <li><a href="https://documentation.nokia.com/sr/25-3/7750-sr/titles/layer-2-services-evpn.html" target="_blank" rel="noopener noreferrer">SR OS Layer 2 Services and EVPN Guide (25.3)</a></li>
+
                     </ul>
 
                     <h3>YANG Models & Automation</h3>
                     <ul>
-                        <li><a href="https://github.com/nokia/7x50_YangModels" target="_blank" rel="noopener noreferrer">Nokia 7x50 YANG Models on GitHub</a></li>
+                        <li><a href="https://github.com/nokia/7x50_YangModels" target="_blank" rel="noopener noreferrer">Nokia 7X50 YANG Models on GitHub</a></li>
                     </ul>
 
                     <h3>Community & Learning Resources</h3>
@@ -841,12 +1087,6 @@ Commit Succeeded.
                     contentArea.innerHTML = ''; // Clear previous content
                     contentArea.appendChild(initialMessage);
                 }
-                 // Optionally, select the first topic by default if no hash
-                // if (topics.length > 0) {
-                //    renderContent(topics[0].id);
-                //    setActiveLink(topics[0].id);
-                //    window.location.hash = topics[0].id;
-                // }
             }
         }
         
