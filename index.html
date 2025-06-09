@@ -81,6 +81,7 @@
             margin-bottom: 1rem; 
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.9em;
+            position: relative; /* Needed for copy button positioning */
         }
         .content-area pre code { /* Code within pre */
              color: #93c5fd; /* blue-300 */
@@ -106,6 +107,29 @@
             color: #1e3a8a; /* blue-800 */
             margin-bottom: 0;
         }
+
+        /* Copy Button Styles */
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background-color: #4b5563; /* gray-600 */
+            color: #e5e7eb; /* gray-200 */
+            border: none;
+            border-radius: 0.25rem; /* rounded-sm */
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            font-size: 0.8rem;
+        }
+        pre:hover .copy-button {
+            opacity: 1;
+        }
+        .copy-button:hover {
+            background-color: #374151; /* gray-700 */
+        }
+
     </style>
 </head>
 <body class="flex flex-col h-screen bg-gray-100">
@@ -134,7 +158,7 @@
                 title: 'Introduction to SR OS',
                 content: `
                     <h2>Introduction to SR OS</h2>
-                    <p><a href="https://www.nokia.com/ip-networks/service-router-operating-system-nos/" target="_blank" rel="noopener noreferrer">Nokia Service Router Operating System (SR OS)</a>, is a robust, high-performance, and feature-rich network operating system designed for service provider and large enterprise networks. It powers Nokia's portfolio of IP/MPLS routers, including the <a href=https://www.nokia.com/ip-networks/7750-service-router/" target="_blank" rel="noopener noreferrer"> 7750 Service Router (SR/SR-s) series</a>, the <a href="https://www.nokia.com/ip-networks/7250-interconnect-router/" target="_blank" rel="noopener noreferrer"> 7250 Interconnect Router (IXR) series</a> and the <a href="https://www.nokia.com/ip-networks/7705-service-aggregation-router/" target="_blank" rel="noopener noreferrer"> 7705 Service Aggregation Router (SAR) series.</a></p>
+                    <p><a href="https://www.nokia.com/ip-networks/service-router-operating-system-nos/" target="_blank" rel="noopener noreferrer">Nokia Service Router Operating System (SR OS)</a>, is a robust, high-performance, and feature-rich network operating system designed for service provider and large enterprise networks. It powers Nokia's portfolio of IP/MPLS routers, including the <a href="https://www.nokia.com/ip-networks/7750-service-router/" target="_blank" rel="noopener noreferrer"> 7750 Service Router (SR/SR-s) series</a>, the <a href="https://www.nokia.com/ip-networks/7250-interconnect-router/" target="_blank" rel="noopener noreferrer"> 7250 Interconnect Router (IXR) series</a> and the <a href="https://www.nokia.com/ip-networks/7705-service-aggregation-router/" target="_blank" rel="noopener noreferrer"> 7705 Service Aggregation Router (SAR) series.</a></p>
                     
                     <h3>Key Characteristics of SR OS:</h3>
                     <ul>
@@ -215,13 +239,16 @@ Commit Succeeded.
                         <li><code>quit</code>: Exits the CLI session.</li>
                     </ul>
 
-                    <h3>Example: Viewing System Information (Operational Mode)</h3>
-                    <pre><code>[/]# show system information
+                    <h3>Example: Viewing System State and Configuration</h3>
+                    <pre><code># To show operational state
+[/]# show system information
 [/]# show card detail
-[/]# admin show configuration bof
-[/]# show full-configuration system</code></pre>
+[/]# show bof
+
+# To show the entire running configuration
+[/]# admin show configuration</code></pre>
                     <div class="note">
-                        <p>The MD-CLI provides a consistent structure aligned with YANG models, making it suitable for automation via NETCONF and gRPC.</p>
+                        <p>The <code>admin show configuration</code> command is the MD-CLI equivalent of <code>admin display-config</code> from the classic CLI.</p>
                     </div>
                 `
             },
@@ -267,12 +294,18 @@ Commit Succeeded.
                     <p>You can also synchronize the boot environment (including BOF): <code>[/]# admin redundancy synchronize boot-environment</code>.</p>
 
                     <h3>Rollback to Previous Configurations</h3>
-                    <p>MD-CLI maintains a history of committed configurations. You can roll back to a previous state.</p>
-                    <pre><code>[/]# show system management-interface commit-history
-[pr:/]# rollback &lt;commit-id&gt; // Rolls back candidate to that state
-[pr:/]# compare to running // See what will change
-[pr:/]# commit // To apply the rollback</code></pre>
-                    <p>Alternatively, to directly revert the running configuration (use with caution):</p>
+                    <p>MD-CLI maintains a history of committed configurations. You can roll back the <strong>candidate</strong> configuration to a previous state using the <code>rollback</code> command from within any configuration mode context.</p>
+                    <pre><code># First, find the commit ID you want to roll back to
+[/]# show system management-interface commit-history
+
+# Now, enter a configuration mode and execute the rollback
+[/]# edit-config private
+[pr:/]# configure
+[pr:/configure]# rollback &lt;commit-id&gt; // Loads the old config into your candidate
+[pr:/configure]# info // Review the candidate config
+[pr:/configure]# compare to running // See what will change
+[pr:/configure]# commit // Apply the rollback</code></pre>
+                    <p>Alternatively, to directly revert the <strong>running</strong> configuration without entering a configuration mode, you can use the <code>admin system rollback</code> operational command. Use this with caution.</p>
                     <pre><code>[/]# admin system rollback &lt;commit-id&gt; confirmed &lt;minutes&gt;</code></pre>
 
 
@@ -797,14 +830,24 @@ Commit Succeeded.
 [pr:/configure router "Base" bgp group "iBGP-RR-Clients" neighbor 192.168.255.2]# exit all</code></pre>
                     <div class="note"><p>For iBGP, ensure there's an IGP (like OSPF or IS-IS) providing reachability for the loopback addresses used for peering.</p></div>
 
-                    <h3>4. Advertising Networks into BGP</h3>
-                    <p>You can advertise networks into BGP using the <code>network</code> command (for prefixes existing in the RIB from other sources like static or IGP) or by redistributing routes from other protocols (more advanced).</p>
+                    <h3>4. Advertising Prefixes using Export Policies</h3>
+                    <p>In SR OS, prefixes are not advertised using a <code>network</code> command. Instead, you create a route policy to select routes from the routing table and export them into BGP.</p>
+                    <p>First, create a policy statement that defines what to advertise. Here, we'll advertise direct interface routes.</p>
                     <pre><code>[/]# edit-config private
-[pr:/]# configure router "Base" bgp
-[pr:/configure router "Base" bgp]# network 172.16.0.0/16
-[pr:/configure router "Base" bgp]# commit
+[pr:/]# configure policy-options policy-statement "export-direct"
+[pr:/configure policy-options policy-statement "export-direct"]# entry 10
+[pr:/...y-statement "export-direct" entry 10]# from
+[pr:/...rt-direct" entry 10 from]# protocol direct
+[pr:/...rt-direct" entry 10 from]# exit
+[pr:/...y-statement "export-direct" entry 10]# action
+[pr:/...direct" entry 10 action]# accept
+[pr:/...direct" entry 10 action]# exit all</code></pre>
+                    <p>Next, apply this policy to your BGP group or neighbor.</p>
+                    <pre><code>[pr:/]# configure router "Base" bgp group "eBGP-Peers"
+[pr:/configure router "Base" bgp group "eBGP-Peers"]# export-policy "export-direct"
+[pr:/configure router "Base" bgp group "eBGP-Peers"]# commit
 Commit Succeeded.
-[pr:/configure router "Base" bgp]# exit all</code></pre>
+[pr:/configure router "Base" bgp group "eBGP-Peers"]# exit all</code></pre>
 
                     <h3>5. BGP Verification (Operational Mode)</h3>
                     <ul>
@@ -820,7 +863,7 @@ Commit Succeeded.
                     </div>
                 `
             }, 
-            { // NEW EVPN SECTION STARTS HERE
+            { 
                 id: 'evpn-basics',
                 title: 'L2 EVPN',
                 content: `
@@ -841,17 +884,17 @@ Commit Succeeded.
 
                     <h3>2. Prerequisites</h3>
                     <ul>
-                        <li>BGP must be configured and operational (as per the "BGP Basics" section).</li>
-                        <li>BGP neighbors intended to exchange EVPN routes must be configured to support the <code>l2-vpn evpn</code> address family.</li>
+                        <li>BGP must be configured and operational (as per the "BGP" section).</li>
+                        <li>BGP neighbors intended to exchange EVPN routes must be configured to support the <code>evpn</code> address family.</li>
                     </ul>
                      <pre><code>[/]# edit-config private
 [pr:/]# configure router "Base" bgp group "iBGP-EVPN-Peers" // Assuming an iBGP group for EVPN
 [pr:/configure router "Base" bgp group "iBGP-EVPN-Peers"]# neighbor 192.168.255.2 // Example iBGP peer
 [pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2]# family evpn
-[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2" family evpn]# admin-state enable
-[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2" family evpn]# commit
+[pr:/configure router "Base" bgp group ... neighbor ... family evpn]# admin-state enable
+[pr:/configure router "Base" bgp group ... neighbor ... family evpn]# commit
 Commit Succeeded.
-[pr:/configure router "Base" bgp group "iBGP-EVPN-Peers" neighbor 192.168.255.2" family evpn]# exit all</code></pre>
+[pr:/configure router "Base" bgp group ... neighbor ... family evpn]# exit all</code></pre>
 
                     <h3>3. Configuring a VPLS Service with BGP-EVPN</h3>
                     <h4>a. Create VPLS Service and Enable BGP EVPN</h4>
@@ -863,7 +906,7 @@ Commit Succeeded.
 [pr:/configure service vpls 100 bgp]# admin-state enable
 [pr:/configure service vpls 100 bgp]# route-distinguisher auto-rd // Or manually define
 [pr:/configure service vpls 100 bgp]# route-target export target:65001:100 // Example RT
-[pr:/configure router "Base" bgp]# route-target import target:65001:100 // Example RT
+[pr:/configure service vpls 100 bgp]# route-target import target:65001:100 // Example RT
 [pr:/configure service vpls 100 bgp]# exit
 [pr:/configure service vpls 100]# bgp-evpn
 [pr:/configure service vpls 100 bgp-evpn]# evi 100 // EVPN Instance ID
@@ -898,7 +941,7 @@ Commit Succeeded.
                         <p>This is a basic L2 EVPN (VPLS) setup. EVPN also supports other service types like E-LAN, E-Line (VPWS), integrated routing and bridging (IRB) for L3 EVPN, and various advanced features like aliasing, mass withdrawal, and BUM traffic handling options.</p>
                     </div>
                 `
-            }, // NEW EVPN SECTION ENDS HERE
+            }, 
             {
                 id: 'show-commands',
                 title: 'Important Show Commands',
@@ -942,7 +985,7 @@ Commit Succeeded.
                         <li><code>show router "Base" segment-routing-v6 sids</code> (*SRv6*)</li>
                         <li><code>show router "Base" bgp summary</code></li>
                         <li><code>show router "Base" bgp neighbor [ip-address] detail</code></li>
-                        <li><code>show router "Base" bgp routes family &lt;family&gt; [all | received | advertised]</code> (e.g., ipv4 unicast, l2-vpn evpn)</li>
+                        <li><code>show router "Base" bgp routes family &lt;family&gt; [all | received | advertised]</code> (e.g., ipv4 unicast, evpn)</li>
                         <li><code>show router "Base" arp [ip-address]</code></li>
                         <li><code>show router "Base" fib [ip-prefix/length] detail</code></li>
                         <li><code>show router "Base" mpls lfib</code> (*Relevant for SR-MPLS*)</li>
@@ -1034,6 +1077,39 @@ Commit Succeeded.
                     initialMessage.style.display = 'none';
                 }
                 contentArea.innerHTML = topic.content;
+
+                // Add copy to clipboard buttons to all pre blocks
+                const preBlocks = contentArea.querySelectorAll('pre');
+                preBlocks.forEach(preBlock => {
+                    const codeText = preBlock.querySelector('code')?.innerText;
+                    if (!codeText) return;
+
+                    const button = document.createElement('button');
+                    button.textContent = 'Copy';
+                    button.className = 'copy-button';
+                    
+                    button.addEventListener('click', () => {
+                        const textArea = document.createElement('textarea');
+                        textArea.value = codeText;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                            document.execCommand('copy');
+                            button.textContent = 'Copied!';
+                        } catch (err) {
+                            console.error('Failed to copy text: ', err);
+                            button.textContent = 'Error';
+                        }
+                        document.body.removeChild(textArea);
+
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                        }, 2000);
+                    });
+
+                    preBlock.appendChild(button);
+                });
+
                 // Scroll to top of content area
                 contentArea.scrollTop = 0;
             } else {
